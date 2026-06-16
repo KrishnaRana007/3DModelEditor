@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Model Editor - Structured Animation Timeline</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="appShell">
+    <header class="top-menu">
+      <div class="brand">3D Model Editor</div>
+      <nav class="menu-bar" aria-label="Main menu">
+        <div class="top-menu-dropdown">
+          <button id="fileMenuBtn" class="menu-btn" type="button">File ▾</button>
+          <div id="fileMenuDropdown" class="top-dropdown-panel">
+            <div class="top-dropdown-heading">Project I/O</div>
+            <button class="top-dropdown-item" type="button" data-project-io="save-json">Save Project JSON</button>
+            <button class="top-dropdown-item" type="button" data-project-io="save-xml">Save Project XML</button>
+            <div class="top-dropdown-separator"></div>
+            <button class="top-dropdown-item" type="button" data-project-io="load-json">Load Project JSON</button>
+            <button class="top-dropdown-item" type="button" data-project-io="load-xml">Load Project XML</button>
+            <div class="top-dropdown-separator"></div>
+            <div class="top-dropdown-heading">Model Import</div>
+            <button class="top-dropdown-item" type="button" data-model-io="import-obj">Import OBJ</button>
+            <button class="top-dropdown-item" type="button" data-model-io="import-gltf">Import GLTF / GLB</button>
+            <button class="top-dropdown-item" type="button" data-model-io="import-stl">Import STL</button>
+            <div class="top-dropdown-separator"></div>
+            <div class="top-dropdown-heading">Model Export</div>
+            <button class="top-dropdown-item" type="button" data-model-io="export-obj">Export OBJ</button>
+            <button class="top-dropdown-item" type="button" data-model-io="export-gltf">Export GLTF</button>
+            <button class="top-dropdown-item" type="button" data-model-io="export-glb">Export GLB</button>
+            <button class="top-dropdown-item" type="button" data-model-io="export-stl">Export STL</button>
+          </div>
+        </div>
+        <button class="menu-btn">Edit</button>
+        <div class="top-menu-dropdown">
+          <button id="viewMenuBtn" class="menu-btn" type="button">View ▾</button>
+          <div id="viewMenuDropdown" class="top-dropdown-panel">
+            <div class="top-dropdown-heading">View Mode</div>
+            <button class="top-dropdown-item active" type="button" data-view-mode="material">Material Preview</button>
+            <button class="top-dropdown-item" type="button" data-view-mode="solid">Solid</button>
+            <button class="top-dropdown-item" type="button" data-view-mode="wireframe">Wireframe</button>
+            <button class="top-dropdown-item" type="button" data-view-mode="rendered">Rendered Preview</button>
+            <button class="top-dropdown-item" type="button" data-view-mode="xray">X-Ray</button>
+            <button class="top-dropdown-item" type="button" data-view-mode="normal">Normal</button>
+            <button class="top-dropdown-item" type="button" data-view-mode="uv">UV View</button>
+            <div class="top-dropdown-separator"></div>
+            <div class="top-dropdown-heading">Camera View</div>
+            <button class="top-dropdown-item" type="button" data-camera-action="view-selected">View Through Selected Camera</button>
+            <button class="top-dropdown-item" type="button" data-camera-action="exit-camera-view">Exit Camera View</button>
+          </div>
+        </div>
+        <div class="top-menu-dropdown">
+          <button id="toolsMenuBtn" class="menu-btn" type="button">Tools ▾</button>
+          <div id="toolsMenuDropdown" class="top-dropdown-panel wide-dropdown">
+            <div class="top-dropdown-heading">Modeling Tools</div>
+            <button class="top-dropdown-item" data-model-tool="extrude">Extrude</button>
+            <button class="top-dropdown-item" data-model-tool="bevel">Bevel</button>
+            <button class="top-dropdown-item" data-model-tool="chamfer">Chamfer</button>
+            <button class="top-dropdown-item" data-model-tool="multicut">Multicut</button>
+            <div class="top-dropdown-separator"></div>
+            <button class="top-dropdown-item" data-model-tool="mirror" data-axis="x">Mirror X</button>
+            <button class="top-dropdown-item" data-model-tool="mirror" data-axis="y">Mirror Y</button>
+            <button class="top-dropdown-item" data-model-tool="mirror" data-axis="z">Mirror Z</button>
+            <div class="top-dropdown-separator"></div>
+            <button class="top-dropdown-item" data-model-tool="delete">Delete</button>
+            <button class="top-dropdown-item" data-model-tool="duplicate">Duplicate (Ctrl+D)</button>
+            <button class="top-dropdown-item" data-model-tool="snap">Snap</button>
+            <button class="top-dropdown-item" data-model-tool="align">Align</button>
+            <button class="top-dropdown-item" data-model-tool="uvMapping">UV Mapping</button>
+            <button class="top-dropdown-item" data-model-tool="textureControls">Texture Controls</button>
+            <button class="top-dropdown-item" data-model-tool="multiMaterial">Multi-material Face Assignment</button>
+            <button class="top-dropdown-item" data-model-tool="array">Array</button>
+            <button class="top-dropdown-item" data-model-tool="gridMeasure">Grid / Measurement</button>
+          </div>
+        </div>
+        <button id="guideBtn" class="menu-btn" type="button">Guide</button>
+      </nav>
+      <div class="menu-actions">
+        <button id="undoBtn" class="action-btn" title="Undo (Ctrl+Z)">Undo</button>
+        <button id="redoBtn" class="action-btn" title="Redo (Ctrl+Y / Ctrl+Shift+Z)">Redo</button>
+        <button id="resetViewBtn" class="action-btn">Reset View</button>
+        <button id="clearSelectionBtn" class="action-btn">Clear Selection</button>
+        <button id="deleteBtn" class="danger-btn">Delete Selected</button>
+      </div>
+    </header>
+
+    <main id="mainArea">
+      <section id="workArea">
+        <aside id="toolsPanel" class="panel tools-panel" aria-label="Editor tools">
+          <div class="panel-title compact">Tools</div>
+          <div class="tool-grid main-tool-grid">
+            <button id="selectToolBtn" class="tool-btn active" type="button" data-select-tool="select" title="Select">
+              <span class="tool-icon">▥</span><span>Select</span>
+            </button>
+            <button class="tool-btn" type="button" data-mode="translate" title="Translate / Move Gizmo">
+              <span class="tool-icon">↔</span><span>Translate</span>
+            </button>
+            <button class="tool-btn" type="button" data-mode="scale" title="Scale Gizmo">
+              <span class="tool-icon">⤢</span><span>Scale</span>
+            </button>
+            <button class="tool-btn" type="button" data-mode="rotate" title="Rotate Gizmo">
+              <span class="tool-icon">⟳</span><span>Rotate</span>
+            </button>
+            <div class="tool-dropdown">
+              <button id="objectMenuBtn" class="tool-btn menu-toggle" type="button" title="Add Three.js object">
+                <span class="tool-icon">▦</span><span>Object</span><b>›</b>
+              </button>
+              <div id="objectOptions" class="tool-options flyout-grid object-flyout" role="menu" aria-label="Object primitives">
+                <button class="tool-option-btn" type="button" data-add="cube"><span>▣</span><em>Box / Cube</em></button>
+                <button class="tool-option-btn" type="button" data-add="sphere"><span>●</span><em>Sphere</em></button>
+                <button class="tool-option-btn" type="button" data-add="plane"><span>▭</span><em>Plane</em></button>
+                <button class="tool-option-btn" type="button" data-add="cylinder"><span>◉</span><em>Cylinder</em></button>
+                <button class="tool-option-btn" type="button" data-add="cone"><span>▲</span><em>Cone</em></button>
+                <button class="tool-option-btn" type="button" data-add="capsule"><span>⬮</span><em>Capsule</em></button>
+                <button class="tool-option-btn" type="button" data-add="circle"><span>○</span><em>Circle</em></button>
+                <button class="tool-option-btn" type="button" data-add="ring"><span>◎</span><em>Ring</em></button>
+                <button class="tool-option-btn" type="button" data-add="torus"><span>⦿</span><em>Torus</em></button>
+                <button class="tool-option-btn" type="button" data-add="torusKnot"><span>☍</span><em>Torus Knot</em></button>
+                <button class="tool-option-btn" type="button" data-add="dodecahedron"><span>⬟</span><em>Dodecahedron</em></button>
+                <button class="tool-option-btn" type="button" data-add="icosahedron"><span>✹</span><em>Icosahedron</em></button>
+                <button class="tool-option-btn" type="button" data-add="octahedron"><span>◆</span><em>Octahedron</em></button>
+                <button class="tool-option-btn" type="button" data-add="tetrahedron"><span>△</span><em>Tetrahedron</em></button>
+                <button class="tool-option-btn" type="button" data-add="lathe"><span>◒</span><em>Lathe</em></button>
+                <button class="tool-option-btn" type="button" data-add="tube"><span>〰</span><em>Tube</em></button>
+                <button class="tool-option-btn" type="button" data-add="shape"><span>⬚</span><em>Shape</em></button>
+                <button class="tool-option-btn" type="button" data-add="extrudeShape"><span>▰</span><em>Extrude Shape</em></button>
+              </div>
+            </div>
+            <div class="tool-dropdown">
+              <button id="lightMenuBtn" class="tool-btn menu-toggle" type="button" title="Add Three.js light">
+                <span class="tool-icon">☀</span><span>Light</span><b>›</b>
+              </button>
+              <div id="lightOptions" class="tool-options flyout-grid light-flyout" role="menu" aria-label="Light types">
+                <button class="tool-option-btn" type="button" data-add="ambientLight"><span>☁</span><em>Ambient</em></button>
+                <button class="tool-option-btn" type="button" data-add="directionalLight"><span>☀</span><em>Directional</em></button>
+                <button class="tool-option-btn" type="button" data-add="hemisphereLight"><span>◐</span><em>Hemisphere</em></button>
+                <button class="tool-option-btn" type="button" data-add="pointLight"><span>✹</span><em>Point</em></button>
+                <button class="tool-option-btn" type="button" data-add="spotLight"><span>🔦</span><em>Spot</em></button>
+                <button class="tool-option-btn" type="button" data-add="rectAreaLight"><span>▭</span><em>Rect Area</em></button>
+              </div>
+            </div>
+            <div class="tool-dropdown">
+              <button id="cameraMenuBtn" class="tool-btn menu-toggle" type="button" title="Add camera object">
+                <span class="tool-icon">▣</span><span>Camera</span><b>›</b>
+              </button>
+              <div id="cameraOptions" class="tool-options flyout-grid camera-flyout" role="menu" aria-label="Camera types">
+                <button class="tool-option-btn" type="button" data-add="perspectiveCamera"><span>▱</span><em>Perspective</em></button>
+                <button class="tool-option-btn" type="button" data-add="orthographicCamera"><span>▤</span><em>Orthographic</em></button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="splitter vertical" id="splitToolsViewport" title="Drag to resize Tools"></div>
+
+        <section id="viewportPanel" class="panel viewport-panel">
+          <div class="panel-title">
+            <span>Scene</span>
+            <span id="selectedBadge">Selected: None</span>
+          </div>
+          <div id="viewport">
+            <div id="selectionRect" class="selection-rect"></div>
+            <div id="cameraFrameOverlay" class="camera-frame-overlay" aria-hidden="true"><span id="cameraViewBadge">Camera View</span></div>
+          </div>
+          <div id="viewportHelp" class="viewport-help">
+            Mode: Object • Select tool hides gizmo • Alt + mouse: orbit • Click/Shift-click: select • Drag: rectangle select • Move/Rotate/Scale: transform
+          </div>
+        </section>
+
+        <div class="splitter vertical" id="splitViewportHierarchy" title="Drag to resize Project Structure"></div>
+
+        <aside id="hierarchyPanel" class="panel hierarchy-panel">
+          <div class="panel-title">Project Structure</div>
+          <div id="sceneTree" class="scene-tree"></div>
+        </aside>
+      </section>
+
+      <div class="splitter horizontal" id="splitViewportInspector" title="Drag to resize Inspector"></div>
+
+      <section id="inspectorPanel" class="panel inspector-panel bottom-editor-panel">
+        <div class="bottom-tabs" role="tablist" aria-label="Bottom editor tabs">
+          <button class="bottom-tab active" type="button" data-bottom-tab="inspector">Inspector</button>
+          <button class="bottom-tab" type="button" data-bottom-tab="material">Material Asset</button>
+          <button class="bottom-tab" type="button" data-bottom-tab="properties">Properties</button>
+          <button class="bottom-tab" type="button" data-bottom-tab="animation">Animation</button>
+          <button class="bottom-tab" type="button" data-bottom-tab="history">History</button>
+        </div>
+        <div id="inspectorTab" class="bottom-tab-content active" data-bottom-content="inspector">
+          <div id="inspectorContent" class="inspector-content"></div>
+        </div>
+        <div id="materialTab" class="bottom-tab-content" data-bottom-content="material">
+          <div id="materialAssetContent" class="inspector-content"></div>
+        </div>
+        <div id="propertiesTab" class="bottom-tab-content" data-bottom-content="properties">
+          <div id="toolPropertiesContent" class="inspector-content"></div>
+        </div>
+        <div id="animationTab" class="bottom-tab-content" data-bottom-content="animation">
+          <div id="animationContent" class="animation-content"></div>
+        </div>
+        <div id="historyTab" class="bottom-tab-content" data-bottom-content="history">
+          <div id="historyContent" class="history-content"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="editorContextMenu" class="context-menu" role="menu" aria-hidden="true">
+    <div class="context-row has-submenu">
+      <span>Create</span>
+      <span class="submenu-arrow">›</span>
+      <div class="context-submenu">
+        <button type="button" class="context-item" data-add="cube">Cube</button>
+        <button type="button" class="context-item" data-add="sphere">Sphere</button>
+        <button type="button" class="context-item" data-add="plane">Plane</button>
+        <button type="button" class="context-item" data-add="cylinder">Cylinder</button>
+        <button type="button" class="context-item" data-add="cone">Cone</button>
+        <div class="context-separator"></div>
+        <button type="button" class="context-item" data-add="directionalLight">Directional Light</button>
+        <button type="button" class="context-item" data-add="pointLight">Point Light</button>
+        <button type="button" class="context-item" data-add="ambientLight">Ambient Light</button>
+        <div class="context-separator"></div>
+        <button type="button" class="context-item" data-add="perspectiveCamera">Perspective Camera</button>
+        <button type="button" class="context-item" data-add="orthographicCamera">Orthographic Camera</button>
+      </div>
+    </div>
+    <div class="context-row has-submenu">
+      <span>Mode</span>
+      <span class="submenu-arrow">›</span>
+      <div class="context-submenu">
+        <button type="button" class="context-item active" data-edit-mode="object">Object</button>
+        <button type="button" class="context-item" data-edit-mode="face">Face</button>
+        <button type="button" class="context-item" data-edit-mode="edge">Edge</button>
+        <button type="button" class="context-item" data-edit-mode="vertex">Vertex</button>
+      </div>
+    </div>
+    <div class="context-row has-submenu">
+      <span>Transform Tool</span>
+      <span class="submenu-arrow">›</span>
+      <div class="context-submenu">
+        <button type="button" class="context-item" data-select-tool="select">Select</button>
+        <button type="button" class="context-item" data-mode="translate">Move</button>
+        <button type="button" class="context-item" data-mode="rotate">Rotate</button>
+        <button type="button" class="context-item" data-mode="scale">Scale</button>
+      </div>
+    </div>
+    <div class="context-row has-submenu">
+      <span>View Mode</span>
+      <span class="submenu-arrow">›</span>
+      <div class="context-submenu">
+        <button type="button" class="context-item active" data-view-mode="material">Material Preview</button>
+        <button type="button" class="context-item" data-view-mode="solid">Solid</button>
+        <button type="button" class="context-item" data-view-mode="wireframe">Wireframe</button>
+        <button type="button" class="context-item" data-view-mode="rendered">Rendered Preview</button>
+        <button type="button" class="context-item" data-view-mode="xray">X-Ray</button>
+        <button type="button" class="context-item" data-view-mode="normal">Normal</button>
+        <button type="button" class="context-item" data-view-mode="uv">UV View</button>
+      </div>
+    </div>
+    <button type="button" class="context-item" data-camera-action="view-selected">View Through Selected Camera</button>
+    <button type="button" class="context-item" data-camera-action="exit-camera-view">Exit Camera View</button>
+    <div class="context-separator"></div>
+    <button type="button" class="context-item" data-model-tool="extrude">Extrude</button>
+    <button type="button" class="context-item" data-model-tool="bevel">Bevel</button>
+    <button type="button" class="context-item" data-model-tool="chamfer">Chamfer</button>
+    <button type="button" class="context-item" data-model-tool="multicut">Multicut</button>
+    <div class="context-row has-submenu">
+      <span>Mirror</span>
+      <span class="submenu-arrow">›</span>
+      <div class="context-submenu">
+        <button type="button" class="context-item" data-model-tool="mirror" data-axis="x">Mirror X</button>
+        <button type="button" class="context-item" data-model-tool="mirror" data-axis="y">Mirror Y</button>
+        <button type="button" class="context-item" data-model-tool="mirror" data-axis="z">Mirror Z</button>
+      </div>
+    </div>
+    <div class="context-separator"></div>
+    <button type="button" class="context-item" data-model-tool="delete">Delete</button>
+    <button type="button" class="context-item" data-model-tool="duplicate">Duplicate</button>
+    <button type="button" class="context-item" data-model-tool="snap">Snap</button>
+    <button type="button" class="context-item" data-model-tool="align">Align</button>
+    <button type="button" class="context-item" data-model-tool="uvMapping">UV Mapping</button>
+    <button type="button" class="context-item" data-model-tool="textureControls">Texture Controls</button>
+    <button type="button" class="context-item" data-model-tool="multiMaterial">Multi-material Face Assignment</button>
+    <button type="button" class="context-item" data-model-tool="array">Array</button>
+    <button type="button" class="context-item" data-model-tool="gridMeasure">Grid / Measurement</button>
+  </div>
+
+
+  <div id="guideModal" class="modal-backdrop" aria-hidden="true">
+    <div class="guide-modal" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+      <div class="guide-header">
+        <h2 id="guideTitle">3D Model Editor Guide</h2>
+        <button id="guideCloseBtn" class="modal-close" type="button">×</button>
+      </div>
+      <div class="guide-content">
+        <h3>1. Project layout</h3>
+        <p>This editor is an offline browser-based 3D Model Editor built with local Three.js, pure JavaScript, HTML, and CSS. The left toolbar contains fast access tools, the center viewport displays the scene, the right Project Structure manages hierarchy, and the bottom tabs contain Inspector, Material Asset, Properties, Animation, and History.</p>
+
+        <h3>2. Viewport navigation</h3>
+        <ol>
+          <li><strong>Alt + left mouse drag</strong> orbits the scene.</li>
+          <li><strong>Middle mouse drag</strong> pans the scene.</li>
+          <li><strong>Mouse wheel</strong> zooms in and out.</li>
+          <li><strong>Reset View</strong> restores the editor camera to the default position.</li>
+        </ol>
+
+        <h3>3. Selection and modes</h3>
+        <ol>
+          <li>Right-click the viewport and open <strong>Mode</strong>.</li>
+          <li>Choose <strong>Object</strong>, <strong>Face</strong>, <strong>Edge</strong>, or <strong>Vertex</strong>.</li>
+          <li>Click to select one item. Use <strong>Shift + click</strong> to select multiple items.</li>
+          <li>Drag a rectangle in the viewport to select multiple objects/components.</li>
+          <li>Face, edge, and vertex modes show hover illumination before selection and selected color after click.</li>
+        </ol>
+
+        <h3>4. Left toolbar</h3>
+        <ol>
+          <li><strong>Select</strong> hides the gizmo and uses wireframe/component highlights.</li>
+          <li><strong>Translate</strong> shows the move gizmo for selected objects/components.</li>
+          <li><strong>Scale</strong> shows the scale gizmo.</li>
+          <li><strong>Rotate</strong> shows the rotate gizmo.</li>
+          <li><strong>Object</strong> opens a right-side flyout with primitives such as cube, sphere, plane, cylinder, cone, torus, and other shapes.</li>
+          <li><strong>Light</strong> opens light types such as Ambient, Directional, Hemisphere, Point, Spot, and Rect Area.</li>
+          <li><strong>Camera</strong> opens Perspective and Orthographic camera creation options.</li>
+        </ol>
+
+        <h3>5. Project Structure / Scene Hierarchy</h3>
+        <ol>
+          <li>Click an item to select it.</li>
+          <li>Double-click a name or use the rename icon to rename it.</li>
+          <li>Use the eye icon to hide/show objects.</li>
+          <li>Use the lock icon to stop selection/transforms for that object.</li>
+          <li>Use duplicate and delete icons to copy or remove hierarchy items.</li>
+          <li>Drag one object onto another to make it a child. Drag it onto Scene Root to unparent.</li>
+        </ol>
+
+        <h3>6. Modeling tools</h3>
+        <ol>
+          <li><strong>Extrude</strong>: Switch to Face/Edge/Vertex mode, select components, then Tools → Extrude. Use the Translate gizmo or Properties tab Extrude Amount X/Y/Z to control the extrusion. Enable Combine to extrude adjacent selected faces as one connected region.</li>
+          <li><strong>Bevel</strong>: Select Face/Edge/Vertex components and apply Bevel. Use Bevel Amount in Properties to soften the selected area.</li>
+          <li><strong>Chamfer</strong>: Similar to Bevel but with a stronger straight offset.</li>
+          <li><strong>Multicut</strong>: In Face mode, selected triangulated faces are split through their center into smaller triangles.</li>
+          <li><strong>Mirror</strong>: Mirror X/Y/Z duplicates selected objects in Object mode or appends mirrored component geometry in component modes.</li>
+          <li><strong>Delete</strong>: Deletes selected objects or selected geometry components. Can also be triggered by the Delete Selected button.</li>
+          <li><strong>Duplicate</strong>: Duplicates selected objects or component geometry. Shortcut: <strong>Ctrl + D</strong>.</li>
+        </ol>
+
+        <h3>7. Snap, Align, UV, Texture and Array tools</h3>
+        <ol>
+          <li><strong>Snap</strong>: Enable snap from Properties, set grid/rotation/scale step, then transform selected objects or components. Use Apply Snap Now for immediate snapping.</li>
+          <li><strong>Align</strong>: Select multiple objects/components, choose axis X/Y/Z and Min/Center/Max alignment in Properties, then apply.</li>
+          <li><strong>UV Mapping</strong>: Select mesh objects, choose Box, Planar, Spherical, or Cylindrical projection, then adjust Repeat, Offset, and Rotation.</li>
+          <li><strong>Texture Controls</strong>: After uploading a texture in Material Asset, use Repeat, Offset, Rotation, Wrap Mode, and Flip Y to tune the texture.</li>
+          <li><strong>Multi-material Face Assignment</strong>: Go to Face mode, select faces, open this tool, choose material type/color, and assign material only to selected faces.</li>
+          <li><strong>Array</strong>: Select an object, choose Linear or Circular mode, then set count, offset/radius/axis/angle. Linear creates repeated objects in a line; Circular arranges copies around an axis.</li>
+        </ol>
+
+        <h3>8. Material Asset tab</h3>
+        <ol>
+          <li>Select a mesh object.</li>
+          <li>Open <strong>Material Asset</strong>.</li>
+          <li>Choose material type such as Basic, Lambert, Phong, Standard, Physical, Toon, Matcap, Normal, Depth, Distance, or Shadow.</li>
+          <li>Edit color, opacity, roughness, metalness, transparency, shininess, side, wireframe, and other properties supported by the selected material.</li>
+          <li>Use <strong>Upload Texture</strong> to apply an image from your system directly onto the selected object.</li>
+        </ol>
+
+        <h3>9. Animation tab</h3>
+        <ol>
+          <li>Select an object and open Animation.</li>
+          <li>At frame 0 click <strong>Add Key</strong> or use Auto Key.</li>
+          <li>Move the seekbar to another frame and change position, rotation, scale, material color, opacity, roughness, metalness, transparency, light/camera properties, or compatible geometry data.</li>
+          <li>Press Play or Spacebar to preview interpolation.</li>
+          <li>Animation plays all keyed objects even when no object is selected.</li>
+        </ol>
+
+        <h3>10. Dope Sheet</h3>
+        <ol>
+          <li>Select an animated object and open Animation.</li>
+          <li>Rows appear for Position, Rotation, Scale, Material Color, and Opacity.</li>
+          <li>Click a diamond key to jump to its frame.</li>
+          <li>Drag a diamond to move a keyframe.</li>
+          <li>Double-click or right-click a diamond to delete the keyframe.</li>
+        </ol>
+
+        <h3>11. File, project save/load and model import/export</h3>
+        <ol>
+          <li><strong>Save Project JSON/XML</strong> stores objects, geometry, materials, textures, lights, cameras, animation keys, selected mode/tool, hierarchy, and camera state.</li>
+          <li><strong>Load Project JSON/XML</strong> restores the saved editor state.</li>
+          <li><strong>Import OBJ / GLTF / GLB / STL</strong> adds external models into the editor scene.</li>
+          <li><strong>Export OBJ / GLTF / GLB / STL</strong> exports selected mesh objects; if nothing is selected, it exports all editable mesh objects.</li>
+        </ol>
+
+        <h3>12. Camera Objects</h3>
+        <ol>
+          <li>Add Perspective or Orthographic cameras from the Camera flyout or context menu.</li>
+          <li>Select a camera and choose View → View Through Selected Camera.</li>
+          <li>Use Exit Camera View to return to the editor camera.</li>
+          <li>Camera preview frame appears during camera view.</li>
+          <li>Camera transforms and camera properties such as FOV, Zoom, Near, Far, and Ortho Size can be animated.</li>
+        </ol>
+
+        <h3>13. View Modes</h3>
+        <ol>
+          <li><strong>Solid</strong>: Simple solid display.</li>
+          <li><strong>Wireframe</strong>: Shows mesh wireframes.</li>
+          <li><strong>Material Preview</strong>: Shows actual object materials.</li>
+          <li><strong>Rendered Preview</strong>: Uses richer lighting/display preview.</li>
+          <li><strong>X-Ray</strong>: Makes objects semi-transparent for through-viewing.</li>
+          <li><strong>Normal View</strong>: Displays normal-based colors.</li>
+          <li><strong>UV View</strong>: Displays UV preview pattern; auto-generates simple UVs where needed.</li>
+        </ol>
+
+        <h3>14. Grid and Measurement tools</h3>
+        <ol>
+          <li>Open Tools → Grid / Measurement.</li>
+          <li>Set grid size, grid divisions, and unit system: meter, centimeter, millimeter, inch, or foot.</li>
+          <li><strong>Ruler/Distance</strong>: Click two points to measure length.</li>
+          <li><strong>Angle</strong>: Click three points; the second point is the angle vertex.</li>
+          <li>Use Clear Measurements to remove markers, lines, and labels.</li>
+        </ol>
+
+        <h3>15. Undo / Redo and History panel</h3>
+        <ol>
+          <li>Use <strong>Ctrl + Z</strong> to undo and <strong>Ctrl + Y</strong> or <strong>Ctrl + Shift + Z</strong> to redo.</li>
+          <li>Open the bottom <strong>History</strong> tab to see commands such as Add Cube, Move Object, Extrude Face, Apply Material, Add Keyframe, Import Model, Rename, Delete, Parent, and more.</li>
+          <li>Click <strong>Start State</strong> to undo all commands.</li>
+          <li>Click any command row to jump the editor back/forward to that history point.</li>
+          <li>Undoable commands are shown as executed; redoable commands are shown as undone.</li>
+        </ol>
+      </div>      </div>
+    </div>
+  </div>
+
+  <input id="projectFileInput" type="file" hidden />
+  <input id="modelFileInput" type="file" hidden />
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./libs/three/build/three.module.js",
+      "three/addons/": "./libs/three/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
